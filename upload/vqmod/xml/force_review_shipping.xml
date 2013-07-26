@@ -1,0 +1,131 @@
+<modification>
+	<id>Force Review Shipping Policy</id>
+	<version>1.0</version>
+	<vqmver>2.3.2</vqmver>
+	<author>David http://boopis.com</author>
+
+	<file name="catalog/language/english/checkout/checkout.php">
+		<operation error="log">
+			<search position="after"><![CDATA[$_['text_comments']                  = 'Add Comments About Your Order';]]></search>
+			<add><![CDATA[$_['text_review_shipping']           = 'I understand exclusions may apply <a class="colorbox" href="%s" alt="%s"><b>%s</b></a>';]]></add>
+		</operation>
+	</file>
+	<file name="catalog/controller/checkout/shipping_method.php">
+		<operation error="log">
+			<search position="before"><![CDATA[if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/checkout/shipping_method.tpl')) {]]></search>
+			<add><![CDATA[if ($this->config->get('config_shipping_id')) {
+			$this->load->model('catalog/information');
+			
+			$information_info = $this->model_catalog_information->getInformation($this->config->get('config_shipping_id'));
+			
+			if ($information_info) {
+				$this->data['text_review_shipping'] = sprintf($this->language->get('text_review_shipping'), $this->url->link('information/information/info', 'information_id=' . $this->config->get('config_shipping_id'), 'SSL'), $information_info['title'], $information_info['title']);
+			} else {
+				$this->data['text_review_shipping'] = '';
+			}
+		} else {
+			$this->data['text_review_shipping'] = '';
+		}
+		if (isset($this->session->data['agree'])) { 
+			$this->data['agree'] = $this->session->data['agree'];
+		} else {
+			$this->data['agree'] = '';
+		}
+		]]></add>
+		</operation>
+		<operation error="log">
+			<search position="bottom" offset="13"></search>
+			<add><![CDATA[if ($this->config->get('config_shipping_id')) {
+					$this->load->model('catalog/information');
+					
+					$information_info = $this->model_catalog_information->getInformation($this->config->get('config_shipping_id'));
+					
+					if ($information_info && !isset($this->request->post['agree'])) {
+						$json['error']['warning'] = sprintf($this->language->get('error_agree'), $information_info['title']);
+					}
+				}]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/view/theme/*/template/checkout/checkout.tpl">
+		<operation error="log">
+			<search position="after"><![CDATA[data: $('#shipping-method input[type=\'radio\']:checked, #shipping-method textarea'),]]></search>
+			<add><![CDATA[data: $('#shipping-method input[type=\'radio\']:checked, #shipping-method input[type=\'checkbox\']:checked, #shipping-method textarea'),]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/view/theme/*/template/checkout/shipping_method.tpl">
+		<operation error="log">
+			<search position="replace" offset="4"><![CDATA[<div class="buttons">]]></search>
+			<add><![CDATA[<?php if ($text_review_shipping) { ?>
+		<div class="buttons">
+			<div class="right"><?php echo $text_review_shipping; ?>
+				 <?php if ($agree) { ?>
+    <input type="checkbox" name="agree" value="1" checked="checked" />
+    <?php } else { ?>
+    <input type="checkbox" name="agree" value="1" />
+    <?php } ?>
+    <input type="button" value="<?php echo $button_continue; ?>" id="button-shipping-method" class="button" />
+			</div>
+		</div>
+		<?php } else { ?>
+		<div class="buttons">
+			<input type="button" value="<?php echo $button_continue; ?>" id="button-shipping-method" class="button" />
+		</div>
+		</div>
+		<?php } ?>]]></add>
+		</operation>
+		<operation error="log">
+			<search position="bottom"><![CDATA[ ]]></search>
+			<add><![CDATA[<script type="text/javascript"><!--
+
+	$('.colorbox').colorbox({
+		overlayClose: true,
+		opacity: 0.5,
+		maxHeight: 560,
+		maxWidth: 560,
+		width:'100%'
+	});
+	
+//--></script> ]]></add>
+		</operation>
+	</file>
+	<file name="admin/language/english/setting/setting.php">
+		<operation error="log">
+			<search position="after"><![CDATA[$_['entry_checkout']               = 'Checkout Terms:<br /><span class="help">Forces people to agree to terms before an a customer can checkout.</span>';]]></search>
+			<add><![CDATA[$_['entry_shipping']               = 'Shipping Terms:<br /><span class="help">Forces people to agree to shipping terms before a customer can choose a shipping method.</span>';]]></add>
+		</operation>
+	</file>
+	<file name="admin/controller/setting/setting.php">
+		<operation error="log">
+			<search position="after"><![CDATA[$this->data['entry_checkout'] = $this->language->get('entry_checkout');]]></search>
+			<add><![CDATA[$this->data['entry_shipping'] = $this->language->get('entry_shipping');]]></add>
+		</operation>
+		<operation error="log">
+			<search position="before"><![CDATA[if (isset($this->request->post['config_checkout_id'])) {]]></search>
+			<add><![CDATA[if (isset($this->request->post['config_shipping_id'])) {
+			$this->data['config_shipping_id'] = $this->request->post['config_shipping_id'];
+		} else {
+			$this->data['config_shipping_id'] = $this->config->get('config_shipping_id');		
+		}]]></add>
+		</operation>
+	</file>
+	<file name="admin/view/template/setting/setting.tpl">
+		<operation error="log">
+			<search position="before" offset="1"><![CDATA[<td><?php echo $entry_checkout; ?></td>]]></search>
+			<add><![CDATA[<tr>
+              <td><?php echo $entry_shipping; ?></td>
+              <td><select name="config_shipping_id">
+                  <option value="0"><?php echo $text_none; ?></option>
+                  <?php foreach ($informations as $information) { ?>
+                  <?php if ($information['information_id'] == $config_shipping_id) { ?>
+                  <option value="<?php echo $information['information_id']; ?>" selected="selected"><?php echo $information['title']; ?></option>
+                  <?php } else { ?>
+                  <option value="<?php echo $information['information_id']; ?>"><?php echo $information['title']; ?></option>
+                  <?php } ?>
+                  <?php } ?>
+                </select></td>
+            </tr>]]></add>
+           </operation>
+	</file>
+</modification>
