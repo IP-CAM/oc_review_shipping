@@ -1,0 +1,5 @@
+ This vqmod adds a checkbox to step 5 of the checkout process. It forces the customer to review the shipping terms in the event that there are exceptions the store owner wants to make clear.
+
+ This mod adds a selection tab to the admin settings area where you can set the page that you want a customer to review before moving on to the payment portion of the checkout process.
+
+ This is a VQmod and it does not change any of the core files.
